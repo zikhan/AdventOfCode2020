@@ -29,28 +29,40 @@ let bagRuleParse(rawRule: string) =
 
     (containerBag, bagRules)
 
+// Part 1 How many bag colors can eventually contain at least one shiny gold bag? 
 let rec findContainerBags (allRules: (string * (int * string) array) array) (search: string) =
     let foundContainers = Array.filter (fun (_, bags) -> bags |> Array.exists (fun (_, bag) -> bag = search)) allRules
                           |> Array.map (fun (container, _bags) -> container) // This finds the first direct layer
 
     if (Array.isEmpty foundContainers)
-    then foundContainers // No where to go
+    then 
+        foundContainers // No where to go
     else 
         Array.collect (findContainerBags allRules) foundContainers
         |> Array.append foundContainers
 
-// Part 1 How many bag colors can eventually contain at least one shiny gold bag? 
 let part1 (allRules: (string * (int * string) array) array) =
-        let searchString = "shiny gold"
-
-        findContainerBags allRules searchString
-        |> Array.distinct
-        |> Array.length
-        |> printfn "Possible bags containing %s: %i" searchString
+    let searchString = "shiny gold"
+    findContainerBags allRules searchString
+    |> Array.distinct
+    |> Array.length
+    |> printfn "Possible bags containing %s: %i" searchString
 
 // Part 2 How many individual bags are required inside your single shiny gold bag?
+let rec countContainedBags (allRules: (string * (int * string) array) array) (bagToCheck: string) : int =
+    let containerBagRules =
+        Array.filter (fun (container, bags) -> container = bagToCheck && (Array.isEmpty >> not) bags) allRules
+    
+    if Array.isEmpty containerBagRules
+    then 0
+    else
+        containerBagRules
+        |> Array.collect (fun (_, bags) -> bags)
+        |> Array.sumBy (fun (count, bag) -> count + (count * (countContainedBags allRules bag)))
+
 let part2 (allRules: (string * (int * string) array) array) =
-    printfn "TBD"
+    countContainedBags allRules "shiny gold"
+    |> printfn "You need %i bags"
 
 [<EntryPoint>]
 let main argv =
