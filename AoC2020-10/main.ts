@@ -4,7 +4,6 @@ var input = rawInput.split('\n').map((value, _index, _arr) => Number(value)).sor
 
 // Part 1 find the sequence of numbers that are |previous - current| >= [1|2|3] and multiply the count of 1 diffs and 3 diffs
 // Current voltage starts at zero
-/*
 let currentVolatage = 0;
 let singleDistance = 0;
 let tripleDistance = 0;
@@ -27,7 +26,7 @@ input.forEach(adaptor => {
 });
 
 console.log(`Solution: ${singleDistance * (tripleDistance + 1)}`);
-*/
+
 // Part 2 find every distinct arrangement that fulfills the |previous - current| >= 1|2|3
 // My possible solution, build a graph of all possible adaptors, Count all paths that end at the highest number
 function findNextPossibleNumbers(arr: number[], currentJoltage: number): number[] {
@@ -48,26 +47,34 @@ function findNextPossibleNumbers(arr: number[], currentJoltage: number): number[
 
 function buildGraph(inputArr: number[]) {
     // deno-lint-ignore no-explicit-any
-    let graph: any = {[0]: findNextPossibleNumbers(inputArr, 0)};
+    const graph: any = {[0]: findNextPossibleNumbers(inputArr, 0)};
     inputArr.forEach((val: number, index: number, array: number[])=>{
-        graph = {...graph, [val]: (findNextPossibleNumbers(array.slice(index + 1), val))};
+        graph[val]= (findNextPossibleNumbers(array.slice(index + 1), val));
     });
     return graph;
 }
 
+// THANKS @corsen-olbin FOR THE TIP TO HELP ME THINK OF THE SOLUTION!
 // deno-lint-ignore no-explicit-any
-function countAllPaths (graph: any, currentNode: number) : number {
-    const allNodes = graph[currentNode];
-    if (allNodes === undefined)
-        return 0;
-    if (allNodes.length === 0)
-        return 1;
-    let count = 0;
-    allNodes.forEach((val: number) => {
-        count += countAllPaths(graph, val);
-    });
-    return count;
+function countAllPaths (inputArr: number[], graph: any) : number {
+    // deno-lint-ignore no-explicit-any
+    const permutations: any = {};
+    for (let index = inputArr.length - 1; index >= 0; index--) {
+        let pointValue = 0;
+        const currentJoltage = inputArr[index];
+        if (graph[currentJoltage].length === 0) {
+            pointValue = 1;
+        }
+        else
+            graph[currentJoltage].forEach((next: string | number) => {
+                pointValue += permutations[next]
+            });
+        permutations[currentJoltage] = pointValue
+    }
+    return graph["0"]
+           .map((v: string|number) => permutations[v]) // Find all the permutations for the starting points
+           .reduce((total: number, current: number) => total + current); // Sum all starting point permutations
 }
 
 const graph = buildGraph(input);
-console.log(countAllPaths(graph, 0))
+console.log("Total Permutations: ", countAllPaths(input, graph))
